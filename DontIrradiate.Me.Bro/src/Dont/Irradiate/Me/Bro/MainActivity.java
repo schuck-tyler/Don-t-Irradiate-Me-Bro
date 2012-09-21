@@ -34,7 +34,7 @@ public class MainActivity extends Activity
 	private final static int TOTAL_PACKET_COUNT = 200;
 	private final static int PACKET_COUNT_THRESHOLD = 50;
 	private int mPacketCounter;
-	
+	private int x;
 	private final static int BOUNDARY_DISTANCE_FROM_CENTER_CM = 200;
 	private final static int BACK_IN_BOUNDS_FROM_CENTER_CM = 160;
 	private boolean roll_back = false;
