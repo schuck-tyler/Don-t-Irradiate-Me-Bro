@@ -53,6 +53,8 @@ public class MainActivity extends Activity
 	private SensorManager sensor_manager;
 	private Sensor accelerometer;
 	
+	private static int POOPS = 1;
+	
 
 	/** Called when the activity is first created. */
 	@Override
