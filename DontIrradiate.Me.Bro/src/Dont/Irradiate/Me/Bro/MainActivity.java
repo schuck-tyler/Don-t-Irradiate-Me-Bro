@@ -126,9 +126,9 @@ public class MainActivity extends ControllerActivity
 			if (roll_back)
 			return;
 						
-			double x = event.values[0];
-			double y = event.values[1];
-			double z = event.values[2];
+			double x = event.values[0]/2; //Values divided by 2 to slow movement REEMMBER TO FIX
+			double y = event.values[1]/2;
+			double z = event.values[2]/2;
 			robot_control.drive(x, y, z);
 		}
 	};
