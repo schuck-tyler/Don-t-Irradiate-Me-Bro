@@ -5,6 +5,7 @@ import orbotix.robot.app.StartupActivity;
 import orbotix.robot.base.DeviceAsyncData;
 import orbotix.robot.base.DeviceMessenger;
 import orbotix.robot.base.DeviceSensorsAsyncData;
+import orbotix.robot.base.DriveAlgorithm;
 import orbotix.robot.base.FrontLEDOutputCommand;
 import orbotix.robot.base.Robot;
 import orbotix.robot.base.RobotControl;
@@ -23,6 +24,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.util.FloatMath;
 import android.util.Log;
 
 /**
@@ -35,8 +37,12 @@ public class MainActivity extends ControllerActivity
 	private final static int PACKET_COUNT_THRESHOLD = 50;
 	private int mPacketCounter;
 	private final static int BOUNDARY_DISTANCE_FROM_CENTER_CM = 200;
-	private final static int BACK_IN_BOUNDS_FROM_CENTER_CM = 160;
+	private final static int BACK_IN_BOUNDS_FROM_CENTER_CM = 30;
+	private float rRadius;
+	private double rAngle;
 	private boolean roll_back = false;
+	
+	private static final String TAG = "Movement"; //tag of log
 	
 	/**
 	* ID for launching the StartupActivity for result to connect to the robot
@@ -48,6 +54,7 @@ public class MainActivity extends ControllerActivity
 	*/
 	private Robot mRobot;
 	private RobotControl robot_control;
+	private DriveAlgorithm drive_algorithm;
 	
 	private SensorManager sensor_manager;
 	private Sensor accelerometer;
@@ -84,8 +91,11 @@ public class MainActivity extends ControllerActivity
 			final String robot_id = data.getStringExtra(StartupActivity.EXTRA_ROBOT_ID);
 			if(robot_id != null && !robot_id.equals("")){
 				mRobot = RobotProvider.getDefaultProvider().findRobot(robot_id);
+				drive_algorithm = new TiltDriveAlgorithm();
+				drive_algorithm.speedScale = .2;
 				this.robot_control = RobotProvider.getDefaultProvider().getRobotControl(mRobot);
-				this.robot_control.setDriveAlgorithm(new TiltDriveAlgorithm());
+				this.robot_control.setDriveAlgorithm(drive_algorithm);
+				robot_control.setRGBColor(0, 255, 255);
 				sensor_manager.registerListener(this.accelerometer_listener, this.accelerometer, SensorManager.SENSOR_DELAY_GAME);
 				
 				//FrontLEDOutputCommand.sendCommand(mRobot, 255.0f);
@@ -129,6 +139,7 @@ public class MainActivity extends ControllerActivity
 			double x = event.values[0];
 			double y = event.values[1];
 			double z = event.values[2];
+			Log.d(TAG, "accelerometer data: " + x + " " + y + " " + z );
 			robot_control.drive(x, y, z);
 		}
 	};
@@ -155,27 +166,27 @@ public class MainActivity extends ControllerActivity
 				// Iterate over each frame, however we set data streaming as only one frame
 				for(DeviceSensorsData datum : data_list){
 					LocatorData locatorData = datum.getLocatorData();
+					//calculate polar coordinates for robot
+					rRadius = FloatMath.sqrt(	(locatorData.getPositionX()*locatorData.getPositionX()) +
+											(locatorData.getPositionY()*locatorData.getPositionY()));
+					rAngle = Math.atan2((double) locatorData.getPositionY(), (double) locatorData.getPositionX());
+					
 					if( locatorData != null ) {
 						if (roll_back) {
-							if (locatorData.getPositionX() < BACK_IN_BOUNDS_FROM_CENTER_CM
-							&& locatorData.getPositionX() > -BACK_IN_BOUNDS_FROM_CENTER_CM
-							&& locatorData.getPositionY() < BACK_IN_BOUNDS_FROM_CENTER_CM
-							&& locatorData.getPositionY() > -BACK_IN_BOUNDS_FROM_CENTER_CM) {
+							if (rRadius < BACK_IN_BOUNDS_FROM_CENTER_CM) {
 								RollCommand.sendStop(mRobot);
 								roll_back = false;
+								robot_control.setRGBColor(0, 255, 255);
 							}
 						}
 					
-						else if (locatorData.getPositionX() > BOUNDARY_DISTANCE_FROM_CENTER_CM
-						|| locatorData.getPositionX() < -BOUNDARY_DISTANCE_FROM_CENTER_CM
-						|| locatorData.getPositionY() > BOUNDARY_DISTANCE_FROM_CENTER_CM
-						|| locatorData.getPositionY() < -BOUNDARY_DISTANCE_FROM_CENTER_CM) {
+						else if (rRadius > BOUNDARY_DISTANCE_FROM_CENTER_CM) {
 							//FrontLEDOutputCommand.sendCommand(mRobot, 255);
 							RollCommand.sendStop(mRobot);
 							if (!roll_back) {
 								// Roll back into bounds
 								// Find current angle
-								double angle = Math.atan2((double) locatorData.getPositionY(), (double) locatorData.getPositionX());
+								double angle = rAngle;
 								angle = 90 - Math.toDegrees(angle);
 								
 								// Invert
@@ -186,8 +197,9 @@ public class MainActivity extends ControllerActivity
 							
 								roll_back = true;
 								//RollCommand.sendCommand(mRobot, (int) angle, 0.6f);
-								robot_control.roll((float)angle, 0.6f);
+								robot_control.roll((float)angle, 0.1f);
 								System.out.println("OUT OF BOUNDS!");
+								robot_control.setRGBColor(255, 0, 128);
 							}
 					
 						}
