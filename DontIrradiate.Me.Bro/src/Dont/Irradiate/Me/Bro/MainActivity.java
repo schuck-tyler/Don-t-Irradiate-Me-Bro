@@ -170,7 +170,6 @@ public class MainActivity extends ControllerActivity
 						|| locatorData.getPositionX() < -BOUNDARY_DISTANCE_FROM_CENTER_CM
 						|| locatorData.getPositionY() > BOUNDARY_DISTANCE_FROM_CENTER_CM
 						|| locatorData.getPositionY() < -BOUNDARY_DISTANCE_FROM_CENTER_CM) {
-							//FrontLEDOutputCommand.sendCommand(mRobot, 255);
 							RollCommand.sendStop(mRobot);
 							if (!roll_back) {
 								// Roll back into bounds
