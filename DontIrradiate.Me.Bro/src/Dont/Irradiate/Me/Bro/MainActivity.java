@@ -23,9 +23,11 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.util.FloatMath;
 import android.util.Log;
+import android.view.View;
 
 /**
 * Connects to an available Sphero robot, and then flashes its LED.
@@ -53,6 +55,7 @@ public class MainActivity extends ControllerActivity
 	* The Sphero Robot
 	*/
 	private Robot mRobot;
+	private String robot_id;
 	private RobotControl robot_control;
 	private DriveAlgorithm drive_algorithm;
 	
@@ -74,6 +77,17 @@ public class MainActivity extends ControllerActivity
         this.mWakeLock.acquire();
 	}
 	
+	public void launchGame(View v){
+		Log.d(TAG, "pressed go button");
+		Intent i = new Intent(this, Game.class);
+		i.putExtra("ROBOT_ID", robot_id);
+		startActivity(i);
+	}
+	
+	public void calibrateSphero(View v){
+		
+	}
+	
 	@Override
 	protected void onStart() {
 		super.onStart();
@@ -91,6 +105,8 @@ public class MainActivity extends ControllerActivity
 			final String robot_id = data.getStringExtra(StartupActivity.EXTRA_ROBOT_ID);
 			if(robot_id != null && !robot_id.equals("")){
 				mRobot = RobotProvider.getDefaultProvider().findRobot(robot_id);
+				robot_control = RobotProvider.getDefaultProvider().getRobotControl(mRobot);
+				robot_control.setRGBColor(255, 0, 255);
 				drive_algorithm = new TiltDriveAlgorithm();
 				drive_algorithm.speedScale = .2;
 				this.robot_control = RobotProvider.getDefaultProvider().getRobotControl(mRobot);
@@ -181,24 +197,29 @@ public class MainActivity extends ControllerActivity
 						}
 					
 						else if (rRadius > BOUNDARY_DISTANCE_FROM_CENTER_CM) {
-							//FrontLEDOutputCommand.sendCommand(mRobot, 255);
+							Log.d(TAG, "Out of Bounds! Turn AROUND!" );
 							RollCommand.sendStop(mRobot);
 							if (!roll_back) {
 								// Roll back into bounds
-								// Find current angle
-								double angle = rAngle;
-								angle = 90 - Math.toDegrees(angle);
-								
-								// Invert
-								if (angle < 180)
-								angle += 180;
-								else
-								angle -= 180;
-							
 								roll_back = true;
-								//RollCommand.sendCommand(mRobot, (int) angle, 0.6f);
-								robot_control.roll((float)angle, 0.1f);
-								System.out.println("OUT OF BOUNDS!");
+								Log.d(TAG, "STOP! it's hammer time..." );
+								robot_control.stopMotors();
+								Handler handlerTimer = new Handler();
+								handlerTimer.postDelayed(new Runnable(){
+							        public void run() {
+							        	// Find current angle
+										double angle = rAngle;
+										angle = 90 - Math.toDegrees(angle);
+										
+										// Invert
+										if (angle < 180)
+										angle += 180;
+										else
+										angle -= 180;
+										Log.d(TAG, "ROLL BACK!" );
+							        	robot_control.roll((float)angle, 0.2f);            
+							      }}, 2000);
+								
 								robot_control.setRGBColor(255, 0, 128);
 							}
 					
