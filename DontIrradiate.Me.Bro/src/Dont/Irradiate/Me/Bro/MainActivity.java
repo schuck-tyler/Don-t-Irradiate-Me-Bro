@@ -27,7 +27,11 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.util.FloatMath;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.LinearLayout;
 
 /**
 * Connects to an available Sphero robot, and then flashes its LED.
@@ -55,12 +59,13 @@ public class MainActivity extends ControllerActivity
 	* The Sphero Robot
 	*/
 	private Robot mRobot;
-	private String robot_id;
 	private RobotControl robot_control;
 	private DriveAlgorithm drive_algorithm;
 	
 	private SensorManager sensor_manager;
 	private Sensor accelerometer;
+	
+	private Game game;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -79,10 +84,26 @@ public class MainActivity extends ControllerActivity
 	
 	public void launchGame(View v){
 		Log.d(TAG, "pressed go button");
-		Intent i = new Intent(this, Game.class);
-		i.putExtra("ROBOT_ID", robot_id);
-		startActivity(i);
+		game = new Game(mRobot, robot_control);
+		// Get a reference to the score_name_entry object in score.xml
+		LinearLayout startGameLayout = (LinearLayout)findViewById(R.id.launcher_buttons);
+		startGameLayout.removeAllViews();
+		
+		// Create new LayoutInflater - this has to be done this way, as you can't directly inflate an XML without creating an inflater object first
+		LayoutInflater inflater = getLayoutInflater();
+		startGameLayout.addView(inflater.inflate(R.layout.game_buttons, null));
+		
+		// The listener for the second button has to be defined here as opposed to in the onCreate, as the score_submitted.xml isn't loaded yet at activity first run
+		Button button = (Button)findViewById(R.id.reset_game);
+		button.setOnClickListener(resetGameListener);
 	}
+	
+	private OnClickListener resetGameListener = new OnClickListener() {
+		public void onClick(View v) {
+			Log.d("Game", "Time to reset the game");
+			//finish(); // Closes this 
+		}
+	};
 	
 	public void calibrateSphero(View v){
 		

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:paddingLeft="8dp"
+	android:paddingRight="8dp"
+	android:paddingTop="20dp"
+	android:paddingBottom="20dp"
+	android:gravity="center">
+
+	<Button
+		android:id="@+id/start_game"
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:paddingLeft="8dp"
+		android:paddingRight="8dp"
+		android:text="Start Game" 
+		android:onClick="launchGame"/>
+	
+	<View
+	    android:layout_width="50dp"
+		android:layout_height="wrap_content" />
+	
+	<Button
+	    android:id="@+id/calibrate_robot"
+	    android:layout_height="wrap_content"
+	    android:layout_width="wrap_content"
+	    android:paddingLeft="8dp"
+		android:paddingRight="8dp"
+		android:text="Calibrate" />
+
+</LinearLayout>
